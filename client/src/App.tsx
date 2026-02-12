@@ -33,7 +33,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user) {
+  // Check both context state AND localStorage to handle race condition after login
+  const hasStoredAuth = localStorage.getItem('authToken') && localStorage.getItem('authUser')
+
+  if (!user && !hasStoredAuth) {
     return <Navigate to="/login" replace />
   }
 
