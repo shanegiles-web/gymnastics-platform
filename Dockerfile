@@ -20,4 +20,4 @@ ENV NODE_ENV=production
 EXPOSE 3001
 
 # Run setup (create tables), seed data (ignore errors if already seeded), and start server
-CMD cd server && npm run db:setup && (npm run db:seed || true) && cd .. && node server/dist/index.js
+CMD cd server && node dist/db/setup.js && (node dist/db/seed.js || true) && cd .. && node server/dist/index.js
