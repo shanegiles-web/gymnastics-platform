@@ -1,0 +1,105 @@
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: '#f0f2ff',
+          100: '#e6e8ff',
+          200: '#d0d5ff',
+          300: '#b5c0ff',
+          400: '#8fa4ff',
+          500: '#5E6AD2',
+          600: '#5560c4',
+          700: '#4450ab',
+          800: '#36408a',
+          900: '#2d3670',
+        },
+        surface: {
+          card: '#FFFFFF',
+          page: '#FAFAFA',
+          input: '#F5F5F5',
+        },
+        border: {
+          DEFAULT: '#E5E5E5',
+          strong: '#D4D4D4',
+          subtle: '#F0F0F0',
+        },
+        text: {
+          primary: '#171717',
+          secondary: '#525252',
+          tertiary: '#737373',
+          disabled: '#A3A3A3',
+        },
+        status: {
+          success: '#00BA88',
+          warning: '#F59E0B',
+          error: '#EF4444',
+          info: '#3B82F6',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        xs: ['12px', { lineHeight: '16px' }],
+        sm: ['14px', { lineHeight: '20px' }],
+        base: ['16px', { lineHeight: '24px' }],
+        lg: ['18px', { lineHeight: '28px' }],
+        xl: ['20px', { lineHeight: '28px' }],
+        '2xl': ['24px', { lineHeight: '32px' }],
+        '3xl': ['30px', { lineHeight: '36px' }],
+      },
+      borderRadius: {
+        sm: '4px',
+        DEFAULT: '6px',
+        md: '8px',
+        lg: '12px',
+      },
+      boxShadow: {
+        xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        DEFAULT: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      },
+      spacing: {
+        px: '1px',
+        0: '0px',
+        1: '4px',
+        2: '8px',
+        3: '12px',
+        4: '16px',
+        5: '20px',
+        6: '24px',
+        7: '28px',
+        8: '32px',
+        9: '36px',
+        10: '40px',
+        12: '48px',
+        14: '56px',
+        16: '64px',
+        20: '80px',
+        24: '96px',
+        28: '112px',
+        32: '128px',
+        36: '144px',
+        40: '160px',
+        44: '176px',
+        48: '192px',
+        52: '208px',
+        56: '224px',
+        60: '240px',
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
