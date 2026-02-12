@@ -3,7 +3,7 @@ import PDFDocument from "pdfkit";
 import { getDb } from "../db/index.js";
 import { waiverTemplates, signedWaivers } from "../db/schema/waivers.js";
 import { AppError } from "../middleware/error-handler.js";
-import { and, eq, isNull, desc } from "drizzle-orm";
+import { and, eq, isNull, desc, count } from "drizzle-orm";
 import { WaiverTemplate, SignedWaiver, PaginatedResponse } from "../types/index.js";
 import { addYears } from "date-fns";
 
@@ -32,7 +32,7 @@ export class WaiverService {
       })
       .returning();
 
-    return template[0] as WaiverTemplate;
+    return template[0] as unknown as WaiverTemplate;
   }
 
   static async getTemplate(facilityId: string, templateId: string): Promise<WaiverTemplate> {
@@ -50,7 +50,7 @@ export class WaiverService {
       throw new AppError("Waiver template not found", "TEMPLATE_NOT_FOUND", 404);
     }
 
-    return template[0] as WaiverTemplate;
+    return template[0] as unknown as WaiverTemplate;
   }
 
   static async getActiveTemplate(facilityId: string): Promise<WaiverTemplate | null> {
@@ -69,13 +69,13 @@ export class WaiverService {
       .orderBy(desc(waiverTemplates.effectiveDate))
       .limit(1);
 
-    return template[0] || null;
+    return (template[0] as unknown as WaiverTemplate) || null;
   }
 
   static async activateTemplate(facilityId: string, templateId: string): Promise<WaiverTemplate> {
     const db = getDb();
 
-    const template = await this.getTemplate(facilityId, templateId);
+    await this.getTemplate(facilityId, templateId);
 
     // Deactivate other templates
     await db
@@ -89,7 +89,7 @@ export class WaiverService {
       .where(eq(waiverTemplates.id, templateId))
       .returning();
 
-    return updated[0] as WaiverTemplate;
+    return updated[0] as unknown as WaiverTemplate;
   }
 
   static async listTemplates(
@@ -101,7 +101,7 @@ export class WaiverService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(waiverTemplates)
@@ -110,15 +110,15 @@ export class WaiverService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (w) => w.countAll() })
+        .select({ count: count() })
         .from(waiverTemplates)
         .where(and(eq(waiverTemplates.facilityId, facilityId), isNull(waiverTemplates.deletedAt))),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as WaiverTemplate[],
+      items: items as unknown as WaiverTemplate[],
       total,
       page,
       limit,
@@ -137,7 +137,7 @@ export class WaiverService {
   ): Promise<SignedWaiver> {
     const db = getDb();
 
-    const template = await this.getTemplate(facilityId, waiverTemplateId);
+    await this.getTemplate(facilityId, waiverTemplateId);
 
     const expiresAt = addYears(new Date(), 1);
 
@@ -157,7 +157,7 @@ export class WaiverService {
       })
       .returning();
 
-    return signedWaiver[0] as SignedWaiver;
+    return signedWaiver[0] as unknown as SignedWaiver;
   }
 
   static async getSignedWaiver(facilityId: string, studentId: string): Promise<SignedWaiver | null> {
@@ -172,7 +172,7 @@ export class WaiverService {
       .orderBy(desc(signedWaivers.signedAt))
       .limit(1);
 
-    return waiver[0] || null;
+    return (waiver[0] as unknown as SignedWaiver) || null;
   }
 
   static async isWaiverValid(facilityId: string, studentId: string): Promise<boolean> {

@@ -10,7 +10,7 @@ import {
 } from "../db/schema/classes.js";
 import { students } from "../db/schema/students.js";
 import { AppError } from "../middleware/error-handler.js";
-import { and, eq, isNull, desc, gte, lte } from "drizzle-orm";
+import { and, eq, isNull, desc, count } from "drizzle-orm";
 import { Class, ClassSchedule, Enrollment, PaginatedResponse } from "../types/index.js";
 import rrule from "rrule";
 const { RRuleSet } = rrule;
@@ -47,7 +47,7 @@ export class ClassService {
       })
       .returning();
 
-    return classEntity[0] as Class;
+    return classEntity[0] as unknown as Class;
   }
 
   static async getClass(facilityId: string, classId: string): Promise<Class> {
@@ -63,7 +63,7 @@ export class ClassService {
       throw new AppError("Class not found", "CLASS_NOT_FOUND", 404);
     }
 
-    return classEntity[0] as Class;
+    return classEntity[0] as unknown as Class;
   }
 
   static async updateClass(
@@ -100,7 +100,7 @@ export class ClassService {
       .where(and(eq(classes.facilityId, facilityId), eq(classes.id, classId)))
       .returning();
 
-    return updated[0] as Class;
+    return updated[0] as unknown as Class;
   }
 
   static async deleteClass(facilityId: string, classId: string): Promise<void> {
@@ -123,7 +123,7 @@ export class ClassService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(classes)
@@ -132,15 +132,15 @@ export class ClassService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (c) => c.countAll() })
+        .select({ count: count() })
         .from(classes)
         .where(and(eq(classes.facilityId, facilityId), isNull(classes.deletedAt))),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as Class[],
+      items: items as unknown as Class[],
       total,
       page,
       limit,
@@ -174,20 +174,21 @@ export class ClassService {
       })
       .returning();
 
-    return schedule[0] as ClassSchedule;
+    return schedule[0] as unknown as ClassSchedule;
   }
 
   static async getSchedulesForClass(classId: string): Promise<ClassSchedule[]> {
     const db = getDb();
 
-    return db
+    const result = await db
       .select()
       .from(classSchedules)
       .where(and(eq(classSchedules.classId, classId), isNull(classSchedules.deletedAt)));
+    return result as unknown as ClassSchedule[];
   }
 
   static async generateClassInstances(
-    facilityId: string,
+    _facilityId: string,
     classId: string,
     startDate: Date,
     endDate: Date
@@ -302,7 +303,7 @@ export class ClassService {
       })
       .returning();
 
-    return enrollment[0] as Enrollment;
+    return enrollment[0] as unknown as Enrollment;
   }
 
   static async unenrollStudent(facilityId: string, classId: string, studentId: string): Promise<void> {
@@ -335,7 +336,7 @@ export class ClassService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(enrollments)
@@ -344,12 +345,12 @@ export class ClassService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (e) => e.countAll() })
+        .select({ count: count() })
         .from(enrollments)
         .where(and(eq(enrollments.classId, classId), isNull(enrollments.deletedAt))),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       items: items as Enrollment[],

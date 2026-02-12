@@ -3,7 +3,7 @@ import { getDb } from "../db/index.js";
 import { attendanceRecords } from "../db/schema/attendance.js";
 import { classInstances } from "../db/schema/classes.js";
 import { AppError } from "../middleware/error-handler.js";
-import { and, eq, isNull, desc, gte, lte } from "drizzle-orm";
+import { and, eq, isNull, desc, gte, lte, count } from "drizzle-orm";
 import { AttendanceRecord, PaginatedResponse } from "../types/index.js";
 
 export class AttendanceService {
@@ -159,7 +159,7 @@ export class AttendanceService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(attendanceRecords)
@@ -174,7 +174,7 @@ export class AttendanceService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (a) => a.countAll() })
+        .select({ count: count() })
         .from(attendanceRecords)
         .where(
           and(
@@ -185,7 +185,7 @@ export class AttendanceService {
         ),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       items: items as AttendanceRecord[],
@@ -208,7 +208,7 @@ export class AttendanceService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(attendanceRecords)
@@ -225,7 +225,7 @@ export class AttendanceService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (a) => a.countAll() })
+        .select({ count: count() })
         .from(attendanceRecords)
         .where(
           and(
@@ -238,7 +238,7 @@ export class AttendanceService {
         ),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       items: items as AttendanceRecord[],

@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db/index.js";
 import { timeRecords } from "../db/schema/timeclock.js";
 import { AppError } from "../middleware/error-handler.js";
-import { and, eq, isNull, desc, gte, lte } from "drizzle-orm";
+import { and, eq, isNull, desc, gte, lte, count } from "drizzle-orm";
 import { TimeRecord, PaginatedResponse } from "../types/index.js";
 import { CONFIG } from "../config/index.js";
 import { differenceInHours, differenceInMinutes } from "date-fns";
@@ -60,7 +60,7 @@ export class TimeclockService {
       })
       .returning();
 
-    return record[0] as TimeRecord;
+    return record[0] as unknown as TimeRecord;
   }
 
   static async clockOut(
@@ -111,7 +111,7 @@ export class TimeclockService {
       .where(eq(timeRecords.id, activeRecord[0].id))
       .returning();
 
-    return updated[0] as TimeRecord;
+    return updated[0] as unknown as TimeRecord;
   }
 
   static async getTimeRecord(facilityId: string, recordId: string): Promise<TimeRecord> {
@@ -127,7 +127,7 @@ export class TimeclockService {
       throw new AppError("Time record not found", "RECORD_NOT_FOUND", 404);
     }
 
-    return record[0] as TimeRecord;
+    return record[0] as unknown as TimeRecord;
   }
 
   static async getUserTimeRecords(
@@ -140,7 +140,7 @@ export class TimeclockService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(timeRecords)
@@ -151,17 +151,17 @@ export class TimeclockService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (t) => t.countAll() })
+        .select({ count: count() })
         .from(timeRecords)
         .where(
           and(eq(timeRecords.facilityId, facilityId), eq(timeRecords.userId, userId), isNull(timeRecords.deletedAt))
         ),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as TimeRecord[],
+      items: items as unknown as TimeRecord[],
       total,
       page,
       limit,
@@ -180,7 +180,7 @@ export class TimeclockService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(timeRecords)
@@ -196,7 +196,7 @@ export class TimeclockService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (t) => t.countAll() })
+        .select({ count: count() })
         .from(timeRecords)
         .where(
           and(
@@ -208,10 +208,10 @@ export class TimeclockService {
         ),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as TimeRecord[],
+      items: items as unknown as TimeRecord[],
       total,
       page,
       limit,
@@ -226,7 +226,7 @@ export class TimeclockService {
   ): Promise<TimeRecord> {
     const db = getDb();
 
-    const record = await this.getTimeRecord(facilityId, recordId);
+    await this.getTimeRecord(facilityId, recordId);
 
     const updated = await db
       .update(timeRecords)
@@ -238,13 +238,13 @@ export class TimeclockService {
       .where(eq(timeRecords.id, recordId))
       .returning();
 
-    return updated[0] as TimeRecord;
+    return updated[0] as unknown as TimeRecord;
   }
 
   static async rejectTimeRecord(facilityId: string, recordId: string, reason: string): Promise<TimeRecord> {
     const db = getDb();
 
-    const record = await this.getTimeRecord(facilityId, recordId);
+    await this.getTimeRecord(facilityId, recordId);
 
     const updated = await db
       .update(timeRecords)
@@ -256,7 +256,7 @@ export class TimeclockService {
       .where(eq(timeRecords.id, recordId))
       .returning();
 
-    return updated[0] as TimeRecord;
+    return updated[0] as unknown as TimeRecord;
   }
 
   static calculateHours(startTime: Date, endTime: Date | null): number {

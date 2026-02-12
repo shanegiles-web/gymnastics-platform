@@ -3,7 +3,7 @@ import { getDb } from "../db/index.js";
 import { invoices, payments, paymentMethods, subscriptions } from "../db/schema/billing.js";
 import { subscriptionPlans } from "../db/schema/shared.js";
 import { AppError } from "../middleware/error-handler.js";
-import { and, eq, isNull, desc } from "drizzle-orm";
+import { and, eq, isNull, desc, count } from "drizzle-orm";
 import { Invoice, Payment, Subscription, PaginatedResponse } from "../types/index.js";
 import { addMonths } from "date-fns";
 
@@ -53,7 +53,7 @@ export class BillingService {
           isNull(paymentMethods.deletedAt)
         )
       )
-      .orderBy(paymentMethods.isDefault ? "desc" : "asc");
+      .orderBy(desc(paymentMethods.isDefault));
   }
 
   static async createInvoice(
@@ -84,7 +84,7 @@ export class BillingService {
       })
       .returning();
 
-    return invoice[0] as Invoice;
+    return invoice[0] as unknown as Invoice;
   }
 
   static async getInvoice(facilityId: string, invoiceId: string): Promise<Invoice> {
@@ -100,7 +100,7 @@ export class BillingService {
       throw new AppError("Invoice not found", "INVOICE_NOT_FOUND", 404);
     }
 
-    return invoice[0] as Invoice;
+    return invoice[0] as unknown as Invoice;
   }
 
   static async updateInvoice(
@@ -129,7 +129,7 @@ export class BillingService {
       .where(and(eq(invoices.facilityId, facilityId), eq(invoices.id, invoiceId)))
       .returning();
 
-    return updated[0] as Invoice;
+    return updated[0] as unknown as Invoice;
   }
 
   static async listInvoices(
@@ -148,7 +148,7 @@ export class BillingService {
       whereClause = and(whereClause, eq(invoices.familyId, familyId));
     }
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(invoices)
@@ -156,13 +156,13 @@ export class BillingService {
         .orderBy(desc(invoices.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ count: (i) => i.countAll() }).from(invoices).where(whereClause),
+      db.select({ count: count() }).from(invoices).where(whereClause),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as Invoice[],
+      items: items as unknown as Invoice[],
       total,
       page,
       limit,
@@ -189,7 +189,7 @@ export class BillingService {
       .where(eq(invoices.id, invoiceId))
       .returning();
 
-    return updated[0] as Invoice;
+    return updated[0] as unknown as Invoice;
   }
 
   static async processPayment(
@@ -248,7 +248,7 @@ export class BillingService {
       })
       .where(eq(invoices.id, invoiceId));
 
-    return payment[0] as Payment;
+    return payment[0] as unknown as Payment;
   }
 
   static async refundPayment(
@@ -293,7 +293,7 @@ export class BillingService {
       })
       .where(eq(invoices.id, payment[0].invoiceId));
 
-    return updated[0] as Payment;
+    return updated[0] as unknown as Payment;
   }
 
   static async createSubscription(
@@ -325,7 +325,7 @@ export class BillingService {
       })
       .returning();
 
-    return subscription[0] as Subscription;
+    return subscription[0] as unknown as Subscription;
   }
 
   static async getSubscription(facilityId: string): Promise<Subscription | null> {
@@ -337,7 +337,7 @@ export class BillingService {
       .where(and(eq(subscriptions.facilityId, facilityId), eq(subscriptions.status, "active"), isNull(subscriptions.deletedAt)))
       .limit(1);
 
-    return subscription[0] || null;
+    return (subscription[0] as unknown as Subscription) || null;
   }
 
   static async cancelSubscription(facilityId: string, reason?: string): Promise<Subscription> {
@@ -360,7 +360,7 @@ export class BillingService {
       .where(eq(subscriptions.id, subscription.id))
       .returning();
 
-    return updated[0] as Subscription;
+    return updated[0] as unknown as Subscription;
   }
 
   static async getSubscriptionPlans(page: number = 1, limit: number = 10): Promise<PaginatedResponse<any>> {
@@ -368,7 +368,7 @@ export class BillingService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(subscriptionPlans)
@@ -377,12 +377,12 @@ export class BillingService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (p) => p.countAll() })
+        .select({ count: count() })
         .from(subscriptionPlans)
         .where(and(eq(subscriptionPlans.isActive, true), isNull(subscriptionPlans.deletedAt))),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       items,

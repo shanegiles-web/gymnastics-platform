@@ -1,12 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db/index.js";
-import { families, familyBillingContacts, coppaConsentRecords } from "../db/schema/families.js";
+import { families, coppaConsentRecords } from "../db/schema/families.js";
 import { students } from "../db/schema/students.js";
-import { users } from "../db/schema/users.js";
 import { AppError } from "../middleware/error-handler.js";
 import { encrypt, decrypt } from "../utils/encryption.js";
-import { and, eq, isNull, desc } from "drizzle-orm";
-import { User, Family, Student, EmergencyContact, PaginatedResponse } from "../types/index.js";
+import { and, eq, isNull, desc, count } from "drizzle-orm";
+import { Family, Student, EmergencyContact, PaginatedResponse } from "../types/index.js";
 
 export class FamilyService {
   static async createFamily(
@@ -54,7 +53,7 @@ export class FamilyService {
       })
       .returning();
 
-    return family[0] as Family;
+    return family[0] as unknown as Family;
   }
 
   static async getFamily(facilityId: string, familyId: string): Promise<Family> {
@@ -70,7 +69,7 @@ export class FamilyService {
       throw new AppError("Family not found", "FAMILY_NOT_FOUND", 404);
     }
 
-    return family[0] as Family;
+    return family[0] as unknown as Family;
   }
 
   static async updateFamily(
@@ -103,7 +102,7 @@ export class FamilyService {
       .where(and(eq(families.facilityId, facilityId), eq(families.id, familyId)))
       .returning();
 
-    return updated[0] as Family;
+    return updated[0] as unknown as Family;
   }
 
   static async deleteFamily(facilityId: string, familyId: string): Promise<void> {
@@ -126,7 +125,7 @@ export class FamilyService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(families)
@@ -135,15 +134,15 @@ export class FamilyService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (f) => f.countAll() })
+        .select({ count: count() })
         .from(families)
         .where(and(eq(families.facilityId, facilityId), isNull(families.deletedAt))),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
-      items: items as Family[],
+      items: items as unknown as Family[],
       total,
       page,
       limit,
@@ -279,7 +278,7 @@ export class FamilyService {
 
     const offset = (page - 1) * limit;
 
-    const [items, [{ count }]] = await Promise.all([
+    const [items, countResult] = await Promise.all([
       db
         .select()
         .from(students)
@@ -294,7 +293,7 @@ export class FamilyService {
         .limit(limit)
         .offset(offset),
       db
-        .select({ count: (s) => s.countAll() })
+        .select({ count: count() })
         .from(students)
         .where(
           and(
@@ -305,7 +304,7 @@ export class FamilyService {
         ),
     ]);
 
-    const total = parseInt(count.toString());
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       items: items.map((s) => this.decryptStudentData(s as any)) as Student[],
