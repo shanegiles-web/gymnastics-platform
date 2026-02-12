@@ -4,7 +4,12 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import compression from "compression";
+import path from "path";
+import { fileURLToPath } from "url";
 import { CONFIG } from "./config/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { initDb, closeDb } from "./db/index.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { rateLimit } from "./middleware/rate-limit.js";
@@ -23,8 +28,15 @@ import adminRoutes from "./routes/admin.routes.js";
 const app: Application = express();
 
 // Security middleware
-app.use(helmet());
-app.use(cors({ origin: CONFIG.FRONTEND_URL, credentials: true }));
+app.use(helmet({
+  contentSecurityPolicy: CONFIG.NODE_ENV === "production" ? undefined : false,
+}));
+
+// CORS - in production, client is served from same origin
+const corsOrigin = CONFIG.NODE_ENV === "production"
+  ? true  // Allow same-origin requests
+  : CONFIG.FRONTEND_URL;
+app.use(cors({ origin: corsOrigin, credentials: true }));
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
@@ -60,7 +72,21 @@ app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/timeclock", timeclockRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
-// 404 handler
+// Serve static files in production
+if (CONFIG.NODE_ENV === "production") {
+  const clientDistPath = path.join(__dirname, "../../client/dist");
+  app.use(express.static(clientDistPath));
+
+  // Handle client-side routing - serve index.html for non-API routes
+  app.get("*", (req: Request, res: Response, next) => {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
+
+// 404 handler (for API routes)
 app.use(notFoundHandler);
 
 // Global error handler
