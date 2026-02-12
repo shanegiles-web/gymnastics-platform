@@ -66,16 +66,16 @@ export class AuthService {
   }
 
   static async login(
-    facilityId: string,
     email: string,
     password: string
   ): Promise<{ user: any; tokens: TokenPair }> {
     const db = getDb();
 
+    // Look up user by email only (for unified login)
     const user = await db
       .select()
       .from(users)
-      .where(and(eq(users.facilityId, facilityId), eq(users.email, email.toLowerCase())))
+      .where(eq(users.email, email.toLowerCase()))
       .limit(1);
 
     if (!user || user.length === 0) {
@@ -98,7 +98,7 @@ export class AuthService {
       .set({ lastLogin: new Date() })
       .where(eq(users.id, userData.id));
 
-    const tokens = this.generateTokens(userData.id, userData.email, facilityId, userData.role);
+    const tokens = this.generateTokens(userData.id, userData.email, userData.facilityId, userData.role);
 
     return {
       user: {
@@ -107,6 +107,7 @@ export class AuthService {
         firstName: userData.firstName,
         lastName: userData.lastName,
         role: userData.role,
+        facilityId: userData.facilityId,
       },
       tokens,
     };

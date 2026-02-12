@@ -48,9 +48,9 @@ router.post(
   validate(loginSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password, facilityId } = req.body;
+      const { email, password } = req.body;
 
-      const result = await AuthService.login(facilityId, email, password);
+      const result = await AuthService.login(email, password);
 
       res.cookie("refreshToken", result.tokens.refreshToken, {
         httpOnly: true,

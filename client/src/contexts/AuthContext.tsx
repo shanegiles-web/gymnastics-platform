@@ -19,9 +19,24 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+interface ApiUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: 'admin' | 'manager' | 'coach' | 'parent'
+  facilityId?: string
+}
+
 interface LoginResponse {
-  token: string
-  user: User
+  success: boolean
+  data: {
+    user: ApiUser
+    tokens: {
+      accessToken: string
+      refreshToken: string
+    }
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -42,10 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiPost<LoginResponse>('/auth/login', { email, password })
-      const { token: newToken, user: newUser } = response
-      localStorage.setItem('authToken', newToken)
+      const { user: userData, tokens } = response.data
+      const newUser: User = {
+        id: userData.id,
+        email: userData.email,
+        name: `${userData.firstName} ${userData.lastName}`,
+        role: userData.role,
+      }
+      localStorage.setItem('authToken', tokens.accessToken)
       localStorage.setItem('authUser', JSON.stringify(newUser))
-      setToken(newToken)
+      setToken(tokens.accessToken)
       setUser(newUser)
     } catch (error) {
       throw error
@@ -61,11 +82,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, name: string) => {
     try {
-      const response = await apiPost<LoginResponse>('/auth/register', { email, password, name })
-      const { token: newToken, user: newUser } = response
-      localStorage.setItem('authToken', newToken)
+      // Registration requires more fields - this is a simplified placeholder
+      // In production, this would need facilityId, firstName, lastName
+      const [firstName, ...lastParts] = name.split(' ')
+      const lastName = lastParts.join(' ') || firstName
+      const response = await apiPost<LoginResponse>('/auth/register', {
+        email,
+        password,
+        firstName,
+        lastName
+      })
+      const { user: userData, tokens } = response.data
+      const newUser: User = {
+        id: userData.id,
+        email: userData.email,
+        name: `${userData.firstName} ${userData.lastName}`,
+        role: userData.role,
+      }
+      localStorage.setItem('authToken', tokens.accessToken)
       localStorage.setItem('authUser', JSON.stringify(newUser))
-      setToken(newToken)
+      setToken(tokens.accessToken)
       setUser(newUser)
     } catch (error) {
       throw error

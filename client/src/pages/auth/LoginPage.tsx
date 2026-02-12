@@ -30,17 +30,17 @@ export function LoginPage() {
 
   const fillDemoAdmin = () => {
     setEmail('admin@demo.com')
-    setPassword('demo123')
+    setPassword('Admin123!')
   }
 
   const fillDemoParent = () => {
     setEmail('parent@demo.com')
-    setPassword('demo123')
+    setPassword('Parent123!')
   }
 
   const fillDemoCoach = () => {
     setEmail('coach@demo.com')
-    setPassword('demo123')
+    setPassword('Coach123!')
   }
 
   return (
