@@ -21,22 +21,33 @@ function getHeaders(): HeadersInit {
   return headers
 }
 
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+  error?: { code: string; message: string }
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type')
-  const data = contentType?.includes('application/json')
+  const json = contentType?.includes('application/json')
     ? await response.json()
     : await response.text()
 
   if (!response.ok) {
     const error: ApiError = {
-      message: typeof data === 'object' ? data?.message || 'Unknown error' : String(data),
+      message: typeof json === 'object' ? json?.error?.message || json?.message || 'Unknown error' : String(json),
       status: response.status,
-      code: typeof data === 'object' ? data?.code : undefined,
+      code: typeof json === 'object' ? json?.error?.code || json?.code : undefined,
     }
     throw error
   }
 
-  return data as T
+  // Extract data from API envelope { success: true, data: T }
+  if (typeof json === 'object' && json !== null && 'success' in json && 'data' in json) {
+    return json.data as T
+  }
+
+  return json as T
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
