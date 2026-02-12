@@ -45,11 +45,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken')
-    const storedUser = localStorage.getItem('authUser')
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    try {
+      const storedToken = localStorage.getItem('authToken')
+      const storedUser = localStorage.getItem('authUser')
+      // Validate that storedUser is actual JSON, not "undefined" or other invalid values
+      if (storedToken && storedUser && storedUser !== 'undefined' && storedUser.startsWith('{')) {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+      } else if (storedToken || storedUser) {
+        // Clear corrupted data
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('authUser')
+      }
+    } catch (e) {
+      // If parsing fails, clear corrupted localStorage
+      console.error('Failed to parse stored auth data:', e)
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('authUser')
     }
     setLoading(false)
   }, [])
