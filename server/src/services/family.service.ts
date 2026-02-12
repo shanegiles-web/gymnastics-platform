@@ -179,7 +179,7 @@ export class FamilyService {
         familyId,
         firstName: data.firstName,
         lastName: data.lastName,
-        dateOfBirth: new Date(data.dateOfBirth),
+        dateOfBirth: new Date(data.dateOfBirth) as any,
         gender: data.gender as any,
         skillLevel: (data.skillLevel || "beginner") as any,
         enrollmentStatus: "active" as any,

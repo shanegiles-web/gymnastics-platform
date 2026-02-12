@@ -27,7 +27,7 @@ export class WaiverService {
         name: data.name,
         version: data.version,
         content: data.content,
-        effectiveDate: data.effectiveDate,
+        effectiveDate: data.effectiveDate as any,
         isActive: false,
       })
       .returning();
@@ -152,8 +152,8 @@ export class WaiverService {
         signature,
         ipAddress,
         userAgent,
-        signedAt: new Date(),
-        expiresAt,
+        signedAt: new Date() as any,
+        expiresAt: expiresAt as any,
       })
       .returning();
 
