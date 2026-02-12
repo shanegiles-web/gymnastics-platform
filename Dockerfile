@@ -19,5 +19,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-# Run migrations and start server
-CMD cd server && npm run db:push && cd .. && node server/dist/index.js
+# Run migrations, seed data (ignore errors if already seeded), and start server
+CMD cd server && npm run db:push && (npm run db:seed || true) && cd .. && node server/dist/index.js
