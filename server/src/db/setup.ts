@@ -1,12 +1,22 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
-import { CONFIG } from "../config/index.js";
+import { config } from "dotenv";
+
+// Load environment variables
+config();
 
 async function setup() {
   console.log("Starting database setup...");
 
-  const client = postgres(CONFIG.DATABASE_URL, { max: 1 });
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.error("ERROR: DATABASE_URL is not set!");
+    process.exit(1);
+  }
+
+  console.log("Connecting to database...");
+  const client = postgres(databaseUrl, { max: 1 });
   const db = drizzle(client);
 
   try {

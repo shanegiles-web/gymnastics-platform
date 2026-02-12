@@ -3,14 +3,24 @@ import postgres from "postgres";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import * as schema from "./schema/index.js";
-import { CONFIG } from "../config/index.js";
+import { config } from "dotenv";
+
+// Load environment variables
+config();
 
 const SALT_ROUNDS = 10;
 
 async function seed() {
   console.log("Starting database seed...");
 
-  const client = postgres(CONFIG.DATABASE_URL, { max: 1 });
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.error("ERROR: DATABASE_URL is not set!");
+    process.exit(1);
+  }
+
+  console.log("Connecting to database...");
+  const client = postgres(databaseUrl, { max: 1 });
   const db = drizzle(client, { schema });
 
   try {
