@@ -87,6 +87,26 @@ router.get("/debug/status", async (_req: Request, res: Response) => {
   }
 });
 
+// Manual setup endpoint to create tables (remove in production)
+router.post("/debug/setup", async (_req: Request, res: Response) => {
+  try {
+    await AuthService.runSetup();
+    res.json({ success: true, message: "Setup completed" });
+  } catch (error) {
+    res.json({ success: false, error: String(error) });
+  }
+});
+
+// Manual seed endpoint to create demo data (remove in production)
+router.post("/debug/seed", async (_req: Request, res: Response) => {
+  try {
+    await AuthService.runSeed();
+    res.json({ success: true, message: "Seed completed" });
+  } catch (error) {
+    res.json({ success: false, error: String(error) });
+  }
+});
+
 // Global admin login
 router.post(
   "/admin/login",
