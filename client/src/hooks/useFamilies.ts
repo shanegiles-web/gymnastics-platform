@@ -11,17 +11,56 @@ export interface Family {
   status: 'active' | 'inactive'
 }
 
+interface ApiFamilyResponse {
+  id: string
+  headOfHousehold?: string
+  name?: string
+  email: string
+  phone?: string
+  children?: string[]
+  status?: 'active' | 'inactive'
+}
+
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+}
+
+function transformFamily(f: ApiFamilyResponse): Family {
+  return {
+    id: f.id,
+    name: f.name || f.headOfHousehold || 'Unknown Family',
+    primaryContact: f.headOfHousehold || '',
+    email: f.email,
+    phone: f.phone || '',
+    children: f.children || [],
+    status: f.status || 'active',
+  }
+}
+
 export function useFamilies() {
   return useQuery({
     queryKey: ['families'],
-    queryFn: () => apiGet<Family[]>('/families'),
+    queryFn: async () => {
+      const response = await apiGet<PaginatedResponse<ApiFamilyResponse> | ApiFamilyResponse[]>('/families')
+      // Handle both paginated and array responses
+      if (Array.isArray(response)) {
+        return response.map(transformFamily)
+      }
+      return response.data.map(transformFamily)
+    },
   })
 }
 
 export function useFamily(id: string) {
   return useQuery({
     queryKey: ['family', id],
-    queryFn: () => apiGet<Family>(`/families/${id}`),
+    queryFn: async () => {
+      const response = await apiGet<ApiFamilyResponse>(`/families/${id}`)
+      return transformFamily(response)
+    },
     enabled: !!id,
   })
 }
