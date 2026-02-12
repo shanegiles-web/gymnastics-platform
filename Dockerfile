@@ -1,41 +1,18 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY client/package*.json ./client/
-COPY server/package*.json ./server/
-
-# Install dependencies
-RUN npm install
-RUN cd client && npm install
-RUN cd server && npm install
-
-# Copy source code
+# Copy all files
 COPY . .
 
-# Build client
-RUN cd client && npm run build
+# Install dependencies
+RUN npm install && \
+    cd client && npm install && \
+    cd ../server && npm install
 
-# Build server
-RUN cd server && npm run build
-
-# Production stage
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-# Copy server package files and install production dependencies
-COPY server/package*.json ./server/
-RUN cd server && npm install --omit=dev
-
-# Copy built server
-COPY --from=builder /app/server/dist ./server/dist
-
-# Copy built client
-COPY --from=builder /app/client/dist ./client/dist
+# Build client and server
+RUN cd client && npm run build && \
+    cd ../server && npm run build
 
 # Set environment
 ENV NODE_ENV=production
