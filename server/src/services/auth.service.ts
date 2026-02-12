@@ -309,4 +309,16 @@ export class AuthService {
   static getTokenExpiryTime(): string {
     return CONFIG.JWT_EXPIRY;
   }
+
+  static async getDebugStatus(): Promise<{ userCount: number; facilityCount: number; emails: string[] }> {
+    const db = getDb();
+    const allUsers = await db.select({ email: users.email }).from(users).limit(10);
+    const { facilities } = await import("../db/schema/shared.js");
+    const allFacilities = await db.select({ id: facilities.id }).from(facilities).limit(10);
+    return {
+      userCount: allUsers.length,
+      facilityCount: allFacilities.length,
+      emails: allUsers.map(u => u.email),
+    };
+  }
 }

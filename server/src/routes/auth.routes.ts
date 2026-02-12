@@ -49,8 +49,10 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
+      console.log("[Login] Attempting login for:", email);
 
       const result = await AuthService.login(email, password);
+      console.log("[Login] Success for:", email);
 
       res.cookie("refreshToken", result.tokens.refreshToken, {
         httpOnly: true,
@@ -69,10 +71,21 @@ router.post(
 
       res.json(response);
     } catch (error) {
+      console.error("[Login] Error:", error);
       next(error);
     }
   }
 );
+
+// Debug endpoint to check database status (remove in production)
+router.get("/debug/status", async (_req: Request, res: Response) => {
+  try {
+    const status = await AuthService.getDebugStatus();
+    res.json({ success: true, data: status });
+  } catch (error) {
+    res.json({ success: false, error: String(error) });
+  }
+});
 
 // Global admin login
 router.post(
