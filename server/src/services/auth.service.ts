@@ -326,6 +326,15 @@ export class AuthService {
     const db = getDb();
     const { sql } = await import("drizzle-orm");
 
+    // Drop existing tables in reverse order (due to foreign keys)
+    await db.execute(sql`DROP TABLE IF EXISTS enrollments CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS students CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS classes CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS families CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS users CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS global_admins CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS facilities CASCADE`);
+
     // Create facilities table
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS facilities (
@@ -400,24 +409,24 @@ export class AuthService {
       )
     `);
 
-    // Create students table
+    // Create students table (matching Drizzle schema)
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS students (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         facility_id UUID NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
-        family_id UUID REFERENCES families(id) ON DELETE SET NULL,
+        family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
         first_name VARCHAR(100) NOT NULL,
         last_name VARCHAR(100) NOT NULL,
-        date_of_birth VARCHAR(20),
-        gender VARCHAR(20),
-        skill_level VARCHAR(50) DEFAULT 'beginner',
-        enrollment_status VARCHAR(50) DEFAULT 'active',
-        waiver_status VARCHAR(50) DEFAULT 'pending',
+        date_of_birth DATE NOT NULL,
+        gender VARCHAR(20) NOT NULL,
+        skill_level VARCHAR(20) DEFAULT 'beginner',
+        enrollment_status VARCHAR(20) DEFAULT 'active',
+        medical_info_encrypted TEXT,
+        emergency_contacts JSONB DEFAULT '[]'::jsonb,
         allergies TEXT,
-        medical_info TEXT,
         notes TEXT,
         photo_url VARCHAR(500),
-        emergency_contacts JSONB DEFAULT '[]'::jsonb,
+        waiver_status VARCHAR(20) DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now(),
         deleted_at TIMESTAMP
