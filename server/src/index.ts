@@ -24,6 +24,8 @@ import waiverRoutes from "./routes/waiver.routes.js";
 import attendanceRoutes from "./routes/attendance.routes.js";
 import timeclockRoutes from "./routes/timeclock.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import studentRoutes from "./routes/student.routes.js";
 
 const app: Application = express();
 
@@ -71,6 +73,8 @@ app.use("/api/v1/waivers", waiverRoutes);
 app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/timeclock", timeclockRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/students", studentRoutes);
 
 // Serve static files in production
 if (CONFIG.NODE_ENV === "production") {
