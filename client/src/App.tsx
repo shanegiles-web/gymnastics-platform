@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { AdminDashboard } from '@/pages/dashboard/AdminDashboard'
 import { StudentsListPage } from '@/pages/students/StudentsListPage'
 import { StudentDetailPage } from '@/pages/students/StudentDetailPage'
+import { StudentFormPage } from '@/pages/students/StudentFormPage'
 import { ClassesListPage } from '@/pages/classes/ClassesListPage'
 import { ClassDetailPage } from '@/pages/classes/ClassDetailPage'
 import { SchedulePage } from '@/pages/schedule/SchedulePage'
@@ -62,6 +63,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <StudentsListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/students/new"
+        element={
+          <ProtectedRoute>
+            <StudentFormPage />
           </ProtectedRoute>
         }
       />
