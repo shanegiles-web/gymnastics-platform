@@ -25,6 +25,13 @@ export const CONFIG = {
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
   SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || "",
 
+  // SMTP Email (Gmail)
+  SMTP_HOST: process.env.SMTP_HOST || "",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || "",
+  SMTP_FROM: process.env.SMTP_FROM || process.env.SMTP_USER || "",
+
   // Encryption
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || "dev-encryption-key-32-bytes-min!",
 

@@ -17,6 +17,7 @@ import { APIResponse, PaginatedResponse } from "../types/index.js";
 import { eq, isNull, and, desc, count, sum } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
+import { EmailService } from "../services/email.service.js";
 
 const router = Router();
 
@@ -351,6 +352,105 @@ router.get(
       const response: APIResponse = {
         success: true,
         data: analytics,
+      };
+
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Email Settings
+
+// Get email settings
+router.get(
+  "/settings/email",
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const settings = EmailService.getSettings();
+      const isConfigured = EmailService.isConfigured();
+
+      const response: APIResponse = {
+        success: true,
+        data: {
+          ...settings,
+          isConfigured,
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Test email
+router.post(
+  "/settings/email/test",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!EmailService.isConfigured()) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "SMTP_NOT_CONFIGURED",
+            message: "SMTP settings are not configured. Please save settings first.",
+          },
+        });
+        return;
+      }
+
+      const { email } = req.body;
+      const testEmail = email || req.user?.email;
+
+      if (!testEmail) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "NO_EMAIL",
+            message: "Please provide an email address to send the test to.",
+          },
+        });
+        return;
+      }
+
+      await EmailService.sendTestEmail(testEmail);
+
+      const response: APIResponse = {
+        success: true,
+        data: { message: `Test email sent to ${testEmail}` },
+      };
+
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Verify email connection
+router.post(
+  "/settings/email/verify",
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!EmailService.isConfigured()) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "SMTP_NOT_CONFIGURED",
+            message: "SMTP settings are not configured.",
+          },
+        });
+        return;
+      }
+
+      const isValid = await EmailService.verifyConnection();
+
+      const response: APIResponse = {
+        success: true,
+        data: { verified: isValid },
       };
 
       res.json(response);
